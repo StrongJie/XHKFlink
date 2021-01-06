@@ -1,8 +1,10 @@
 package org.apache.flink.util;
 
+import com.sun.deploy.util.StringUtils;
 import org.apache.flink.annotation.PublicEvolving;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Random;
 
 @PublicEvolving
@@ -95,10 +97,63 @@ public class AbstractID implements Comparable<AbstractID>, Serializable {
         return upperPart;
     }
 
+    /**
+     * Gets the bytes underlying this ID.
+     *
+     * @return The bytes underlying this ID.
+     */
+    public byte[] getBytes() {
+        byte[] bytes = new byte[SIZE];
+        longToByteArray(lowerPart, bytes, 0);
+        longToByteArray(upperPart, bytes, SIZE_OF_LONG);
+        return bytes;
+    }
+
+    /**
+     * Returns pure String representation of the ID in hexadecimal. This method should be used to construct things like
+     * paths etc., that require a stable representation and is therefore final.
+     */
+    public final String toHexString() {
+        if (this.hexString == null) {
+            final byte[] ba = new byte[SIZE];
+            longToByteArray(this.lowerPart, ba, 0);
+            longToByteArray(this.upperPart, ba, SIZE_OF_LONG);
+
+            this.hexString = StringUtils.byteToHexString(ba); // defined in flink-core-util StringUtils
+        }
+        return this.hexString;
+    }
+
+    // --------------------------------------------------------------------------------------------
+    //  Standard Utilities
+    // --------------------------------------------------------------------------------------------
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractID that = (AbstractID) o;
+        return upperPart == that.upperPart &&
+                lowerPart == that.lowerPart;
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(upperPart, lowerPart);
+    }
 
+    @Override
+    public int compareTo(AbstractID o) {
+        int diff1 = Long.compare(this.upperPart, o.upperPart);
+        int diff2 = Long.compare(this.lowerPart, o.lowerPart);
+        return diff1 == 0 ? diff2 : diff1;
+    }
+
+    @Override
+    public String toString() {
+        return toHexString();
+    }
 
     // --------------------------------------------------------------------------------------------
     //  Conversion Utilities
@@ -134,7 +189,5 @@ public class AbstractID implements Comparable<AbstractID>, Serializable {
             ba[offset + SIZE_OF_LONG - 1 - i] = (byte) ((l & (0xffL << shift)) >>> shift);
         }
     }
-
-
 
 }
