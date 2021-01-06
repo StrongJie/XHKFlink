@@ -21,6 +21,7 @@ public interface AutoCloseableAsync extends AutoCloseable {
 
     default void close() throws Exception {
         try {
+
             closeAsync().get();
         } catch (ExecutionException e) {
             throw new FlinkException("Could not close resource.", ExceptionUtils.stripExecutionException(e)); //flink-core util FlinkException.java
