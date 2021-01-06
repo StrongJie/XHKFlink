@@ -18,7 +18,6 @@ public interface AutoCloseableAsync extends AutoCloseable {
      * @return Future which is completed once the resource has been closed
      */
     CompletableFuture<Void> closeAsync();
-
     default void close() throws Exception {
         try {
             closeAsync().get();
